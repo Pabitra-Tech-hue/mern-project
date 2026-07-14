@@ -1,38 +1,41 @@
-import express, { Request, Response, NextFunction } from "express";
-import { errorHandler } from "./middlewares/errorhandler.middleware.js";
+import express, { NextFunction, Request, Response } from "express";
+import { errorHandler } from "./middlewares/errorhandler.middleware";
+// npm i -D  @types/express //  npm i --save-dev  @types/express
 
-// Express app instance
+//* importing routes
+import authRoutes from "./routes/auth.routes";
+
+//* express app instance
 const app = express();
 
-// Middleware
+//! using middlewares
 app.use(express.json());
 
-// Health check route
+//! health check route
 app.get("/", (req: Request, res: Response) => {
   res.status(200).json({
-    message: "Server is up & running!",
+    message: "server is up & running!!!!",
     success: true,
     status: "success",
     data: null,
   });
 });
 
+//! using routes
+app.use("/api/v1/auth", authRoutes);
+// app.use("/api/v2/auth", authRoutes);
 
-// !using routes
-
-// !using path not found route
-app.use((req:Request, res:Response, next:NextFunction)=>{
-    const message=`con not ${req.method} on ${req.path}`;
- 
-    next({
-           message,
-        status:"fail",
-        success:false,
-        statusCode:404,
-    })
-
+//! using path not found route
+app.use((req: Request, res: Response, next: NextFunction) => {
+  const message = `can not ${req.method} on ${req.path}`;
+  const error: any = new Error(message);
+  error.status = "fail";
+  error.statusCode = 404;
+  next(error);
 });
-// !errorhandler middleware
+
+//! error handler middleware
 app.use(errorHandler);
+
 export default app;
 

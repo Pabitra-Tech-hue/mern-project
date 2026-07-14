@@ -12,3 +12,4 @@ export const connectDatabase=(DB_URI:string)=>{
     });
 
 };
+

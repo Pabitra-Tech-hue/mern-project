@@ -1,22 +1,21 @@
-
-import { Request, Response, NextFunction } from "express";
+import { NextFunction, Request, Response } from "express";
 
 export const errorHandler = (
-  
-  Error:any,
+  error: any,
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
-const statusCode =Error?.statusCode??500;
-const message=Error?.message??"internala server error";
-const status=Error?.status??"error";
-const success=false;
-res.status(statusCode).json({
+  const statusCode = error?.statusCode ?? 500;
+  const message = error?.message ?? "Internal server error";
+  const status = error?.status ?? "error";
+  const success = false;
+
+  res.status(statusCode).json({
     message,
     status,
     success,
-    data:null,
-    stack:Error?.stack??null,
-});
+    data: null,
+    stack: error?.stack ?? null,
+  });
 };

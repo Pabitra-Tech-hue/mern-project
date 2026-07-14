@@ -4,37 +4,34 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
-const errorhandler_middleware_js_1 = require("./middlewares/errorhandler.middleware.js");
-// Express app instance
+const errorhandler_middleware_1 = require("./middlewares/errorhandler.middleware");
+// npm i -D  @types/express //  npm i --save-dev  @types/express
+//* importing routes
+const auth_routes_1 = __importDefault(require("./routes/auth.routes"));
+//* express app instance
 const app = (0, express_1.default)();
-// Middleware
+//! using middlewares
 app.use(express_1.default.json());
-// Health check route
+//! health check route
 app.get("/", (req, res) => {
     res.status(200).json({
-        message: "Server is up & running!",
+        message: "server is up & running!!!!",
         success: true,
         status: "success",
         data: null,
     });
 });
-// !using routes
-// !using path not found route
+//! using routes
+app.use("/api/v1/auth", auth_routes_1.default);
+// app.use("/api/v2/auth", authRoutes);
+//! using path not found route
 app.use((req, res, next) => {
-    const message = `con not ${req.method} on ${req.path}`;
-    res.status(404).json({
-        message,
-        status: "fail",
-        success: false,
-        data: null,
-    });
-    next({
-        message,
-        status: "fail",
-        success: false,
-        statusCode: 404,
-    });
+    const message = `can not ${req.method} on ${req.path}`;
+    const error = new Error(message);
+    error.status = "fail";
+    error.statusCode = 404;
+    next(error);
 });
-// !errorhandler middleware
-app.use(errorhandler_middleware_js_1.errorHandler);
+//! error handler middleware
+app.use(errorhandler_middleware_1.errorHandler);
 exports.default = app;

@@ -6,6 +6,7 @@ const DB_URI="mongodb://localhost:27017/team_16_db";
 
 
 // *connect database"
+connectDatabase (DB_URI)
 
 // *http server 
 const server = http.createServer(app);
