@@ -3,17 +3,21 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.hashPassword = void 0;
-// *hash password
-const bcryptjs_1 = __importDefault(require("bcryptjs"));
+exports.comparePassword = exports.hashPassword = void 0;
+const bcrypt_1 = __importDefault(require("bcrypt"));
+// hash password
 const hashPassword = async (password) => {
+    return await bcrypt_1.default.hash(password, 10);
+};
+exports.hashPassword = hashPassword;
+//*compare password
+const comparePassword = async (password, hash) => {
     try {
-        const salt = await bcryptjs_1.default.genSalt(10);
-        return await bcryptjs_1.default.hash(password, salt);
+        return await bcrypt_1.default.compare(password, hash);
     }
     catch (error) {
         console.log(error);
         throw new Error("something went wrong");
     }
 };
-exports.hashPassword = hashPassword;
+exports.comparePassword = comparePassword;

@@ -1,53 +1,64 @@
+import mongoose, { Document } from "mongoose";
+import ImageSchema from "./image.model";
 
-import mongoose, {Document} from "mongoose";
-enum Role{
-    USER="USER",
-    ADMIN="ADMIN",
+enum Role {
+  USER = "USER",
+  ADMIN = "ADMIN",
 }
-// *user interface
-interface IUser extends Document{
-    full_name:string;
-    email:string;
-    password:string;
-    profile_image?:string;
-    Role:Role;
+
+// Interface
+interface IUser extends Document {
+  full_name: string;
+  email: string;
+  password: string;
+  role: Role;
+
+  profile_image?: {
+    path: string;
+    public_id: string;
+  };
 }
-// *schema
-const userSchema=new mongoose.Schema <IUser>({
-    full_name:{
-        type:String,
-        required:[true, "full_name is required"],
-        minlength:[3, "name must be 3 characters long."],
 
-
-
+// Schema
+const userSchema = new mongoose.Schema<IUser>(
+  {
+    full_name: {
+      type: String,
+      required: [true, "Full name is required"],
+      minlength: [3, "Name must be at least 3 characters long"],
+      trim: true,
     },
 
-    email:{
-        type:String,
-        required:[true, "email is required"],
-        unique:[true, "user already exists with provided email"],
-    
-        trim:true,
+    email: {
+      type: String,
+      required: [true, "Email is required"],
+      unique: true,
+      trim: true,
     },
-    password:{
-        type:String,
-        default:null,
-        select:false,
-    },
-    Role:{
-        type:String,
-        enum:Object.values(Role),
-        default:Role.USER,
-    },
-    profile_image:{
-        type:String,
-        default:null,
-    }
-},{timestamps:true});
 
+    password: {
+      type: String,
+      required: true,
+      select: false,
+    },
 
-// *model
-const User=mongoose.model("user", userSchema);
+    role: {
+      type: String,
+      enum: Object.values(Role),
+      default: Role.USER,
+    },
+
+    profile_image: {
+      type: ImageSchema,
+      default: null,
+    },
+  },
+  {
+    timestamps: true,
+  }
+);
+
+// Model
+const User = mongoose.model<IUser>("user", userSchema);
 
 export default User;

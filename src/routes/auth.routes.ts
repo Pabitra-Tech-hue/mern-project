@@ -1,24 +1,39 @@
 import express from "express";
-import { Login,register } from "../controllers/auth.controller";
 
-import { validator } from "../middlewares/validators.middleware";
-import { loginUserSchema, registerUserSchema } from "../validators/auth.validators";
+import{changePassword, getProfile, Login,Logout,register} from "../controllers/auth.controller";
+import {validator} from "../middlewares/validators.middleware";
+import {LoginUserSchema, logoutSchema,registerUserSchema} from "../validators/auth.validators";
+import { multerUploader } from "../middlewares/multer.middleware";
+import { authenticate } from "../middlewares/auth.middleware";
 
-const router = express.Router();
+const router=express.Router();
+const upload=multerUploader();
 
-// Register
+// *register account
 router.post(
   "/register",
+  upload.single("profile_image"),//multer upload middleware
   validator(registerUserSchema),
-  register
-);
+  register,
+)
+
 
 // Login
 router.post(
   "/login",
-  validator(loginUserSchema),
+  validator(LoginUserSchema),
   Login
 );
 
+// logout
+router.delete("/logout",validator(logoutSchema),
+  Logout
+);
+router.get("/profile",authenticate(),getProfile);
+router.put("/changePassword",authenticate(),changePassword)
+
 export default router;
+
+
+
 

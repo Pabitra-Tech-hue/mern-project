@@ -4,39 +4,43 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = __importDefault(require("mongoose"));
+const image_model_1 = __importDefault(require("./image.model"));
 var Role;
 (function (Role) {
     Role["USER"] = "USER";
     Role["ADMIN"] = "ADMIN";
 })(Role || (Role = {}));
-// *schema
+// Schema
 const userSchema = new mongoose_1.default.Schema({
     full_name: {
         type: String,
-        required: [true, "full_name is required"],
-        minlength: [3, "name must be 3 characters long."],
+        required: [true, "Full name is required"],
+        minlength: [3, "Name must be at least 3 characters long"],
+        trim: true,
     },
     email: {
         type: String,
-        required: [true, "email is required"],
-        unique: [true, "user already exists with provided email"],
+        required: [true, "Email is required"],
+        unique: true,
         trim: true,
     },
     password: {
         type: String,
-        default: null,
+        required: true,
         select: false,
     },
-    Role: {
+    role: {
         type: String,
         enum: Object.values(Role),
         default: Role.USER,
     },
     profile_image: {
-        type: String,
+        type: image_model_1.default,
         default: null,
-    }
-}, { timestamps: true });
-// *model
+    },
+}, {
+    timestamps: true,
+});
+// Model
 const User = mongoose_1.default.model("user", userSchema);
 exports.default = User;
