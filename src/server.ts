@@ -3,11 +3,12 @@ import http from "http";
 import connectDatabase from "./config/database.config";
 import { verifySmtp } from "./config/nodemailer.config";
 import { sendEmail } from "./utils/sendEmail.utils";
+import { ENV_CONFIG } from "./config/env.config";
 
 
-const PORT = 8080;
+const PORT =ENV_CONFIG.PORT ?? 8080;
 
-const DB_URI = "mongodb://localhost:27017/team_16_db";
+const DB_URI = ENV_CONFIG.DB_URI;
 
 
 // Connect database

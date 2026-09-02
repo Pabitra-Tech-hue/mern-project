@@ -4,37 +4,43 @@ import AppError from "../utils/appError.utils";
 import { verifyToken } from "../utils/Jwt.utils";
 
 export const authenticate = (roles?: Role[]) => {
-  return (req: Request, res: Response, next: NextFunction) => {
+  return (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
     try {
-
-      // 1. Get JWT Token
+      // 1. Get JWT token from cookies
       const access_token = req.cookies?.access_token;
 
       if (!access_token) {
-        throw new AppError("Unauthorized. Token required", 401);
+        throw new AppError(
+          "Unauthorized. Token required",
+          401
+        );
       }
 
-
-      // 2. Verify Token
+      // 2. Verify JWT token
       const decoded_data = verifyToken(access_token);
+
+      if (!decoded_data) {
+        throw new AppError(
+          "Unauthorized. Invalid token",
+          401
+        );
+      }
 
       console.log("Decoded User:", decoded_data);
 
 
-      if (!decoded_data) {
-        throw new AppError("Unauthorized. Invalid token", 401);
-      }
-
-
-      // 3. Check User Role
+      // 3. Role authorization check
       if (
         roles &&
         roles.length > 0 &&
         !roles.includes(decoded_data.role as Role)
       ) {
-
         console.log("Required Roles:", roles);
-        console.log("Current User Role:", decoded_data.role);
+        console.log("Current Role:", decoded_data.role);
 
         throw new AppError(
           "You cannot access this resource",
@@ -43,7 +49,7 @@ export const authenticate = (roles?: Role[]) => {
       }
 
 
-      // 4. Add user data to request
+      // 4. Attach user information to request
       req.user = {
         _id: decoded_data._id,
         email: decoded_data.email,
@@ -51,6 +57,7 @@ export const authenticate = (roles?: Role[]) => {
       };
 
 
+      // 5. Continue request
       next();
 
     } catch (error) {

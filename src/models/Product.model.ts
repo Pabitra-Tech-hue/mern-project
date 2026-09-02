@@ -1,63 +1,70 @@
 import mongoose from "mongoose";
-
-import { string } from "zod/mini";
 import ImageSchema from "./image.model";
 
 const productSchema = new mongoose.Schema(
   {
     name: {
       type: String,
-      required:[true,"name is required"],
-      minLength:3,
-      maxLength:200,
-     
+      required: [true, "Name is required"],
+      minlength: [3, "Name must be at least 3 characters"],
+      maxlength: [200, "Name cannot exceed 200 characters"],
+      trim: true,
     },
+
     price: {
       type: Number,
-      required: true,
-      minLength:0,
+      required: [true, "Price is required"],
+      min: [0, "Price cannot be negative"],
     },
-    // brand:
-    brand:{
-      type:mongoose.Schema.Types.ObjectId,
-      ref:"brand",
-      required:[true,"brand is required"],
-    },
+
     description: {
       type: String,
-     minLength:50,
+      required: [true, "Description is required"],
+      minlength: [
+        50,
+        "Description must be at least 50 characters long",
+      ],
     },
-    category:{
-      type:mongoose.Schema.Types.ObjectId,
-      ref:"category",
-      required:[true, "category is required"],
+
+    brand: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "brand",
+      required: [true, "Brand is required"],
     },
-    cover_images:{
-      type:string,
-      required:[true,"cover_images us required"],
+
+    category: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "category",
+      required: [true, "Category is required"],
     },
-    images:[
-    {
-      type:ImageSchema,
-      default:null,
+
+    cover_image: {
+      type: ImageSchema,
+      required: [true, "Cover image is required"],
     },
+
+    images: [
+      {
+        type: ImageSchema,
+      },
     ],
-    is_featured:{
-      types:Boolean,
-      default:false,
+
+    is_featured: {
+      type: Boolean,
+      default: false,
     },
-    new_arrival:{
-      types:Boolean,
-      default:true,
-    }
-   
+
+    new_arrival: {
+      type: Boolean,
+      default: true,
     },
-  
+  },
   {
     timestamps: true,
   }
 );
 
-const Product = mongoose.model("Product", productSchema);
+
+const Product = mongoose.model("product", productSchema);
 
 export default Product;

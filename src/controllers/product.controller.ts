@@ -1,214 +1,280 @@
-import { Request, Response } from "express";
+ 
 import Product from "../models/Product.model";
-import { catchAsync } from "../utils/catchAsync.utils";
 import AppError from "../utils/appError.utils";
+import { catchAsync } from "../utils/catchAsync.utils";
+import {
+  deleteFileFormCloudinary,
+  uploadFileToCloudinary,
+} from "../utils/cloudinary.utils";
 import { sendResponse } from "../utils/sendresponse.utils";
 
+const folder = "/products";
 
-// GET ALL PRODUCTS
-
-export const getAll = catchAsync(
-  async (req: Request, res: Response) => {
-
-    const products = await Product.find({});
-
-
-    sendResponse(res, {
-      statusCode: 200,
-      message: "Products fetched successfully",
-      data: products,
-    });
-
+//* get all
+export const getAll = catchAsync(async (req, res) => {
+  const { query, category, brand, minPrice, maxPrice } = req.query;
+  const filter: any = {};
+  if (query) {
+    filter.$or = [
+      {
+        name: {
+          $regex: query,
+          $options: "i",
+        },
+      },
+      {
+        description: {
+          $regex: query,
+          $options: "i",
+        },
+      },
+    ];
   }
-);
 
-
-
-// GET PRODUCT BY ID
-
-export const getById = catchAsync(
-  async (req: Request, res: Response) => {
-
-    const { id } = req.params;
-
-
-    const product = await Product.findById(id);
-
-
-    if (!product) {
-      throw new AppError(
-        "Product not found",
-        404
-      );
-    }
-
-
-    sendResponse(res, {
-      statusCode: 200,
-      message: "Product fetched successfully",
-      data: product,
-    });
-
+  //* category
+  if (category) {
+    filter.category = category;
   }
-);
 
-
-
-
-// CREATE PRODUCT
-
-export const create = catchAsync(
-  async (req: Request, res: Response) => {
-
-    const {
-      name,
-      price,
-      description,
-      category,
-    } = req.body;
-
-
-
-    if (!name) {
-      throw new AppError(
-        "Product name is required",
-        400
-      );
-    }
-
-
-    if (!price) {
-      throw new AppError(
-        "Product price is required",
-        400
-      );
-    }
-
-
-
-    const product = new Product({
-      name,
-      price,
-      description,
-      category,
-    });
-
-
-
-    await product.save();
-
-
-
-    sendResponse(res, {
-      statusCode: 201,
-      message: "Product created successfully",
-      data: product,
-    });
-
+  //* brand
+  if (brand) {
+    filter.brand = brand;
   }
-);
 
+  //* price range
+  if (minPrice || maxPrice) {
+    const low = Number(minPrice);
+    const high = Number(maxPrice);
 
-
-
-// UPDATE PRODUCT
-
-export const update = catchAsync(
-  async (req: Request, res: Response) => {
-
-    const { id } = req.params;
-
-
-    const {
-      name,
-      price,
-      description,
-      category,
-    } = req.body;
-
-
-
-    const product = await Product.findById(id);
-
-
-
-    if (!product) {
-      throw new AppError(
-        "Product not found",
-        404
-      );
+    if (low) {
+      filter.price = {
+        $gte: low,
+      };
     }
 
-
-
-    if (name) {
-      product.name = name;
+    if (high) {
+      filter.price = {
+        $lte: high,
+      };
     }
 
-
-    if (price) {
-      product.price = price;
+    if (low && high) {
+      filter.price = {
+        $lte: high,
+        $gte: low,
+      };
     }
-
-
-    if (description) {
-      product.description = description;
-    }
-
-
-    if (category) {
-      product.category = category;
-    }
-
-
-
-    await product.save();
-
-
-
-    sendResponse(res, {
-      statusCode: 200,
-      message: "Product updated successfully",
-      data: product,
-    });
-
   }
-);
 
+  const products = await Product.find(filter)
+    .populate("category")
+    .populate("brand")
+    .limit(8)
+    .skip(0);
 
+  sendResponse(res, {
+    data: products,
+    message: "Products fetched",
+    statusCode: 200,
+  });
+});
+//* get by id
+export const getById = catchAsync(async (req, res) => {
+  const { id } = req.params;
+  const product = await Product.findOne({ _id: id });
 
+  if (!product) throw new AppError(`product not found`, 404);
 
-// DELETE PRODUCT
+  sendResponse(res, {
+    data: product,
+    message: `Product:${id} fetched`,
+    statusCode: 200,
+  });
+});
 
-export const remove = catchAsync(
-  async (req: Request, res: Response) => {
+//* create
+export const create = catchAsync(async (req, res) => {
+    console.log(req.body)
+  const { cover_image, images } = req.files as {
+    cover_image: Express.Multer.File[];
+    images: Express.Multer.File[];
+  };
+  const {
+    name,
+    description,
+    price,
+    brand,
+    category,
+    new_arrival,
+    is_featured,
+  } = req.body;
 
-    const { id } = req.params;
-
-
-
-    const product = await Product.findById(id);
-
-
-
-    if (!product) {
-      throw new AppError(
-        "Product not found",
-        404
-      );
-    }
-
-
-
-    await product.deleteOne();
-
-
-
-    sendResponse(res, {
-      statusCode: 200,
-      message: "Product deleted successfully",
-      data: null,
-    });
-
+  if (!cover_image || !cover_image[0]) {
+    throw new AppError("cover image is required", 400);
   }
-);
+
+  const product = new Product({
+    name,
+    description,
+    price,
+    brand,
+    category,
+    new_arrival,
+    is_featured,
+  });
+
+  //* upload cover_image
+  const { path, public_id } = await uploadFileToCloudinary(
+    cover_image[0],
+    folder,
+  );
+  product.cover_image = {
+    path,
+    public_id,
+  };
+
+  //Promise.all(arr_promise)
+  //Promise.allSettled(arr_promise)
+  //Promise.race(arr_promise)
+  //Promise.any(arr_promise)
+
+  //* upload images
+  if (images && images.length > 0) {
+    const promises = images.map((file) => uploadFileToCloudinary(file, folder));
+    const files = await Promise.allSettled(promises);
+    const fullFilled = files
+      .filter((promise) => promise.status === "fulfilled")
+      .map((img) => img.value);
+    product.set("images", fullFilled);
+  }
+  //* save product
+  await product.save();
+
+  //* send response
+  sendResponse(res, {
+    message: "product created",
+    data: product,
+    statusCode: 201,
+  });
+});
+
+//* delete
+export const remove = catchAsync(async (req, res) => {
+  const { id } = req.params;
+  const product = await Product.findOne({ _id: id });
+  if (!product) throw new AppError(`product not found`, 404);
+
+  //* delete cover image
+  deleteFileFormCloudinary(product.cover_image.public_id);
+
+  //*delete images
+  if (product.images && product.images.length > 0) {
+    Promise.allSettled(
+      product.images.map((img) => deleteFileFormCloudinary(img.public_id)),
+    );
+  }
+
+  //* delete product
+  await product.deleteOne();
+
+  //* send response
+  sendResponse(res, {
+    message: `product: ${id} deleted`,
+    statusCode: 200,
+    data: null,
+  });
+});
+
+//* update
+// deleted_image = [public_ids]
+// [5] => [3] + [2]
+
+export const update = catchAsync(async (req, res) => {
+  const { cover_image, images } = req.files as {
+    cover_image: Express.Multer.File[];
+    images: Express.Multer.File[];
+  };
+  const {
+    name,
+    description,
+    price,
+    brand,
+    category,
+    new_arrival,
+    is_featured,
+    deleted_images,
+  } = req.body;
+
+  const { id } = req.params;
+
+  const product = await Product.findOne({ _id: id });
+  if (!product) throw new AppError(`product not found`, 404);
+
+  if (name) product.name = name;
+  if (description) product.description = description;
+  if (category) product.category = category;
+  if (brand) product.brand = brand;
+  if (price) product.price = price;
+  if (new_arrival) product.new_arrival = new_arrival;
+  if (is_featured) product.is_featured = is_featured;
+
+  //* update cover image
+  if (cover_image && cover_image[0]) {
+    deleteFileFormCloudinary(product.cover_image.public_id);
+    const { path, public_id } = await uploadFileToCloudinary(
+      cover_image[0],
+      folder,
+    );
+    product.cover_image = {
+      path,
+      public_id,
+    };
+  }
+
+  //* update images
+  //* if deleted images
+  if (
+    deleted_images &&
+    Array.isArray(deleted_images) &&
+    deleted_images.length > 0
+  ) {
+    Promise.allSettled(
+      deleted_images.map((public_id) => deleteFileFormCloudinary(public_id)),
+    );
+
+    product.images = product.images.filter(
+      (img) => !deleted_images.includes(img.public_id.toString()),
+    ) as any;
+  }
+
+  //* if new images
+  if (images && images.length > 0) {
+    // [{status:'',value:{path,public_id}}]
+    const files = await Promise.allSettled(
+      images.map((file) => uploadFileToCloudinary(file, folder)),
+    );
+
+    const newImages = files
+      .filter((file) => file.status === "fulfilled")
+      .map((file) => file.value);
+    product.set("images", [...product.images, ...newImages]);
+  }
+
+  //* save product
+  await product.save();
+
+  //* send successful response
+  sendResponse(res, {
+    message: `product:${id} updated`,
+    data: product,
+    statusCode: 200,
+  });
+});
+
+//* get by category
+
+//* get by brand
+
+//* get new arrivals
+
+//* get featured

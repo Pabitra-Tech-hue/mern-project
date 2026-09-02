@@ -17,6 +17,9 @@ interface IUser extends Document {
     path: string;
     public_id: string;
   };
+
+  // Wishlist
+  wishlist: mongoose.Types.ObjectId[];
 }
 
 // Schema
@@ -52,6 +55,14 @@ const userSchema = new mongoose.Schema<IUser>(
       type: ImageSchema,
       default: null,
     },
+
+    // Wishlist
+    wishlist: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "product",
+      },
+    ],
   },
   {
     timestamps: true,

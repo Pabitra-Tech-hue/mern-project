@@ -1,32 +1,52 @@
 import express from "express";
- import {getAll,getById, create,update,remove} from "../controllers/brand.controllers"
- import {authenticate} from "../middlewares/auth.middleware";
+
+import {
+  getAll,
+  getById,
+  create,
+  update,
+  remove,
+} from "../controllers/brand.controllers";
+
+import { authenticate } from "../middlewares/auth.middleware";
 import { Role } from "../types/enum.types";
 import { multerUploader } from "../middlewares/multer.middleware";
 
-
-
 const router = express.Router();
-const upload=multerUploader();
 
-// *get all
-router.get("/" ,authenticate([Role.ADMIN,Role.SUPER_ADMIN]),
-upload.single("logo"),getAll);
+const upload = multerUploader();
 
-// *getById
-router.get("/:id",authenticate([Role.ADMIN,Role.SUPER_ADMIN]),
-upload.single("logo") ,getById);
+// GET ALL BRANDS
+router.get(
+  "/",
 
-// *POST
-router.post("/",authenticate([Role.ADMIN, Role.SUPER_ADMIN]),
-    upload.single("logo"),create);
+  getAll,
+);
 
-// *put
-router.put("/:id",authenticate([Role.ADMIN, Role.SUPER_ADMIN]),
-    upload.single("logo"), update);
+// GET ONE BRAND
+router.get(
+  "/:id",
 
-    // *delete
-router.delete("/:id", authenticate([Role.ADMIN,Role.SUPER_ADMIN]),
-    upload.single("logo"),remove);
+  getById,
+);
+
+// CREATE BRAND
+router.post(
+  "/",
+  authenticate([Role.USER, Role.ADMIN, Role.SUPER_ADMIN]),
+  upload.single("logo"),
+  create,
+);
+
+// UPDATE BRAND
+router.put(
+  "/:id",
+  authenticate([Role.ADMIN, Role.SUPER_ADMIN]),
+  upload.single("logo"),
+  update,
+);
+
+// DELETE BRAND
+router.delete("/:id", authenticate([Role.ADMIN, Role.SUPER_ADMIN]), remove);
 
 export default router;

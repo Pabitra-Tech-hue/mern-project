@@ -1,36 +1,64 @@
 import express from "express";
 
-import{changePassword, getProfile, Login,Logout,register} from "../controllers/auth.controller";
-import {validator} from "../middlewares/validators.middleware";
-import {LoginUserSchema, logoutSchema,registerUserSchema} from "../validators/auth.validators";
+import {
+  changePassword,
+  getProfile,
+  Login,
+  Logout,
+  register,
+} from "../controllers/auth.controller";
+
+import { validator } from "../middlewares/validators.middleware";
+
+import {
+  LoginUserSchema,
+  logoutSchema,
+  registerUserSchema,
+} from "../validators/auth.validators";
+
 import { multerUploader } from "../middlewares/multer.middleware";
 import { authenticate } from "../middlewares/auth.middleware";
 
-const router=express.Router();
-const upload=multerUploader();
+const router = express.Router();
 
-// *register account
+const upload = multerUploader();
+
+// * Signup
 router.post(
-  "/register",
-  upload.single("profile_image"),//multer upload middleware
+  "/signup",
+  upload.single("profile_image"),
   validator(registerUserSchema),
-  register,
-)
+  register
+);
 
-
-// Login
+// * Login
 router.post(
   "/login",
   validator(LoginUserSchema),
   Login
 );
 
-// logout
-router.delete("/logout",validator(logoutSchema),
+// * Logout
+router.delete(
+  "/logout",
+  authenticate(),
+  validator(logoutSchema),
   Logout
 );
-router.get("/profile",authenticate(),getProfile);
-router.put("/changePassword",authenticate(),changePassword)
+
+// * Get profile
+router.get(
+  "/profile",
+  authenticate(),
+  getProfile
+);
+
+// * Change password
+router.put(
+  "/changePassword",
+  authenticate(),
+  changePassword
+);
 
 export default router;
 

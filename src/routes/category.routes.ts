@@ -1,22 +1,29 @@
 import express from "express";
-import {createCategory,  getById,update, remove} from "../controllers/category.controllers.js";
+import {
+  create,
+  getAll,
+  getById,
+  remove,
+  update,
+} from "../controllers/category.controllers";
+import { multerUploader } from "../middlewares/multer.middleware";
 
+const router = express.Router();
+const upload = multerUploader();
 
+//* get all
+router.get("/", getAll);
 
+//* get by id
+router.get("/:id", getById);
 
-const router=express.Router();
+//* create
+router.post("/", upload.single("image"), create);
 
-// *createcategory
-router.post("/", createCategory);
+//* update
+router.put("/:id", upload.single("image"), update);
 
-// *getbyid
+//* delete
+router.delete("/:id", remove);
 
-router.get("/:id",getById );
-
-// *updatecategory
-
-router.put("/:id",update);
-
-// *deletecategory
-
-router.delete("/id:",remove);
+export default router;

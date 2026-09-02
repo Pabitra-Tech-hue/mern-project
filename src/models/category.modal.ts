@@ -1,33 +1,26 @@
 import mongoose from "mongoose";
+import ImageSchema from "./image.model";
 
-// imterface
-export interface ICategory extends Document{
-    name:String,
-    description:String,
-}
-
-
-const categorySchema=new mongoose.Schema<ICategory>(
-    {
-        name:{
-            type:String,
-            required:[true,"name is required"],
-            minLength:[3, "name must be at least 3 characters long"],
-            trim:true,
-
-        },
-        description:{
-            type:String,
-            default:null,
-        },
+const categorySchema = new mongoose.Schema(
+  {
+    name: {
+      type: String,
+      required: [true, "name is required"],
+      minLength: 3,
+      trim: true,
     },
-    {
-        timestamps:true,
-    }
-
+    description: {
+      type: String,
+      minLength: [10, "description must be at least 10 character long"],
+    },
+    image: {
+      type: ImageSchema,
+      required: [true, "image is required"],
+    },
+  },
+  { timestamps: true },
 );
 
-
-// model
-const Category=mongoose.model<ICategory>("category",categorySchema);
+//* model
+const Category = mongoose.model("category", categorySchema);
 export default Category;
