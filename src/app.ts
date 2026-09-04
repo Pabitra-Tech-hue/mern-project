@@ -17,11 +17,12 @@ const app = express();
 
 app.use(
   cors({
-    origin: ["http://localhost:3000",
-    "https://mern-project-frontend-2vti.onrender.com",
+    origin: [
+      "http://localhost:3000",
+      "https://mern-project-frontend-2vti.onrender.com",
     ],
     credentials: true,
-  })
+  }),
 );
 
 app.use(cookieParser());
