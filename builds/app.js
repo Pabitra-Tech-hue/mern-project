@@ -17,7 +17,8 @@ const wishlist_routes_1 = __importDefault(require("./routes/wishlist.routes"));
 const app = (0, express_1.default)();
 //! CORS configuration (allowing requests from Next.js frontend)
 app.use((0, cors_1.default)({
-    origin: ["http://localhost:3000",
+    origin: [
+        "http://localhost:3000",
         "https://mern-project-frontend-2vti.onrender.com",
     ],
     credentials: true,
