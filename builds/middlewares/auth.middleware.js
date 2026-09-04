@@ -9,31 +9,32 @@ const Jwt_utils_1 = require("../utils/Jwt.utils");
 const authenticate = (roles) => {
     return (req, res, next) => {
         try {
-            // 1. Get JWT Token
+            // 1. Get JWT token from cookies
             const access_token = req.cookies?.access_token;
             if (!access_token) {
                 throw new appError_utils_1.default("Unauthorized. Token required", 401);
             }
-            // 2. Verify Token
+            // 2. Verify JWT token
             const decoded_data = (0, Jwt_utils_1.verifyToken)(access_token);
-            console.log("Decoded User:", decoded_data);
             if (!decoded_data) {
                 throw new appError_utils_1.default("Unauthorized. Invalid token", 401);
             }
-            // 3. Check User Role
+            console.log("Decoded User:", decoded_data);
+            // 3. Role authorization check
             if (roles &&
                 roles.length > 0 &&
                 !roles.includes(decoded_data.role)) {
                 console.log("Required Roles:", roles);
-                console.log("Current User Role:", decoded_data.role);
+                console.log("Current Role:", decoded_data.role);
                 throw new appError_utils_1.default("You cannot access this resource", 403);
             }
-            // 4. Add user data to request
+            // 4. Attach user information to request
             req.user = {
                 _id: decoded_data._id,
                 email: decoded_data.email,
                 role: decoded_data.role,
             };
+            // 5. Continue request
             next();
         }
         catch (error) {

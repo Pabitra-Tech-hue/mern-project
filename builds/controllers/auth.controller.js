@@ -16,13 +16,27 @@ const sendEmail_utils_1 = require("../utils/sendEmail.utils");
 const emailTemplate_utils_1 = require("../utils/emailTemplate.utils");
 //* register
 exports.register = (0, catchAsync_utils_1.catchAsync)(async (req, res) => {
-    const { full_name, email, password } = req.body;
+    // Get signup data
+    const { name, email, password, c_password } = req.body;
+    // Check password
+    if (password !== c_password) {
+        throw new appError_utils_1.default("Passwords do not match", 400);
+    }
+    // Check existing email
+    const existingUser = await user_model_1.default.findOne({ email });
+    if (existingUser) {
+        throw new appError_utils_1.default("Email already exists", 400);
+    }
     const file = req.file;
-    const user = new user_model_1.default({ full_name, email });
-    //* password hash
+    // Create user
+    const user = new user_model_1.default({
+        full_name: name,
+        email,
+    });
+    // Password hash
     const hash = await (0, bcrypt_utils_1.hashPassword)(password);
     user.password = hash;
-    //* upload profile image
+    // Upload profile image
     if (file) {
         const { path, public_id } = await (0, cloudinary_utils_1.uploadFileToCloudinary)(file, "/profile_images");
         user.profile_image = {
@@ -30,22 +44,21 @@ exports.register = (0, catchAsync_utils_1.catchAsync)(async (req, res) => {
             public_id,
         };
     }
-    // * save user
+    // Save user
     await user.save();
-    // *send account created email
-    //*send account created email
+    // Send account created email
     (0, sendEmail_utils_1.sendEmail)({
         to: user.email,
         subject: "Account created",
         html: (0, emailTemplate_utils_1.generateAccountCreatedHtml)({
             full_name: user.full_name,
             email: user.email,
-            createdAt: new Date(Date.now()),
+            createdAt: new Date(),
         }),
     });
-    //* converting mongodb doc to js object
+    // Remove password from response
     const { password: _, ...rest } = user.toObject();
-    //* send success response
+    // Send success response
     (0, sendresponse_utils_1.sendResponse)(res, {
         message: "Account created",
         data: rest,
@@ -75,7 +88,11 @@ exports.Login = (0, catchAsync_utils_1.catchAsync)(async (req, res, next) => {
     const { password: _, ...rest } = user.toObject();
     //* Set Cookie
     res.cookie("access_token", access_token, {
-        maxAge: Number(env_config_1.ENV_CONFIG.COOKIE_EXPIRY ?? "7") * 24 * 60 * 60 * 1000,
+        maxAge: Number(env_config_1.ENV_CONFIG.COOKIE_EXPIRY ?? "7") *
+            24 *
+            60 *
+            60 *
+            1000,
         httpOnly: env_config_1.ENV_CONFIG.NODE_ENV === "development" ? false : true,
         secure: env_config_1.ENV_CONFIG.NODE_ENV === "development" ? false : true,
         sameSite: env_config_1.ENV_CONFIG.NODE_ENV === "development" ? "lax" : "none",
@@ -101,19 +118,20 @@ exports.Login = (0, catchAsync_utils_1.catchAsync)(async (req, res, next) => {
         },
     });
 });
-// *get profile
+//* get profile
 exports.getProfile = (0, catchAsync_utils_1.catchAsync)(async (req, res) => {
     const id = req.user._id;
     const user = await user_model_1.default.findById(id);
-    if (!user)
-        throw new appError_utils_1.default("user not found", 404);
+    if (!user) {
+        throw new appError_utils_1.default("User not found", 404);
+    }
     (0, sendresponse_utils_1.sendResponse)(res, {
-        message: "profile fetched",
+        message: "Profile fetched",
         data: user,
         statusCode: 200,
     });
 });
-// *logout
+//* logout
 exports.Logout = (0, catchAsync_utils_1.catchAsync)(async (_, res) => {
     res.clearCookie("access_token", {
         httpOnly: true,
@@ -126,7 +144,7 @@ exports.Logout = (0, catchAsync_utils_1.catchAsync)(async (_, res) => {
         data: null,
     });
 });
-// *change password
+//* change password
 exports.changePassword = (0, catchAsync_utils_1.catchAsync)(async (req, res) => {
     const { old_password, new_password } = req.body;
     if (!old_password) {

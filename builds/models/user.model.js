@@ -38,6 +38,13 @@ const userSchema = new mongoose_1.default.Schema({
         type: image_model_1.default,
         default: null,
     },
+    // Wishlist
+    wishlist: [
+        {
+            type: mongoose_1.default.Schema.Types.ObjectId,
+            ref: "product",
+        },
+    ],
 }, {
     timestamps: true,
 });

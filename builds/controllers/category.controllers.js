@@ -3,62 +3,96 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.remove = exports.update = exports.getById = exports.createCategory = void 0;
+exports.remove = exports.update = exports.create = exports.getById = exports.getAll = void 0;
 const category_modal_1 = __importDefault(require("../models/category.modal"));
 const sendresponse_utils_1 = require("../utils/sendresponse.utils");
+const catchAsync_utils_1 = require("../utils/catchAsync.utils");
 const appError_utils_1 = __importDefault(require("../utils/appError.utils"));
-const createCategory = async (req, res) => {
-    const { name, description } = req.body;
-    const createCategory = await category_modal_1.default.create({
-        name,
-        description,
-    });
+const cloudinary_utils_1 = require("../utils/cloudinary.utils");
+//* get all
+exports.getAll = (0, catchAsync_utils_1.catchAsync)(async (req, res, next) => {
+    const categories = await category_modal_1.default.find({});
+    //* send success response
     (0, sendresponse_utils_1.sendResponse)(res, {
-        statusCode: 201,
-        message: "Category created successfully",
-        data: createCategory,
-    });
-};
-exports.createCategory = createCategory;
-// getbyid
-const getById = async (req, res) => {
-    const { id } = req.params;
-    const category = await category_modal_1.default.findById(id);
-    if (!category) {
-        throw new appError_utils_1.default("Category not found", 404);
-    }
-    (0, sendresponse_utils_1.sendResponse)(res, {
-        statusCode: 201,
-        message: "Brand createdd successfully",
-        data: category,
-    });
-};
-exports.getById = getById;
-// *update
-const update = async (req, res) => {
-    const { id } = req.params;
-    const category = await category_modal_1.default.findById(id);
-    if (!category) {
-        throw new appError_utils_1.default("Category not found", 404);
-    }
-    (0, sendresponse_utils_1.sendResponse)(res, {
-        statusCode: 201,
-        message: "category updated successfully",
-        data: category,
-    });
-};
-exports.update = update;
-// *delete
-const remove = async (req, res) => {
-    const { id } = req.params;
-    const category = await category_modal_1.default.findById(id);
-    if (!category) {
-        throw new appError_utils_1.default("category not found", 400);
-    }
-    (0, sendresponse_utils_1.sendResponse)(res, {
+        data: categories,
+        message: "categories fetched",
         statusCode: 200,
-        message: "brand deleted successfully",
-        data: null,
     });
-};
-exports.remove = remove;
+});
+//* get by id
+exports.getById = (0, catchAsync_utils_1.catchAsync)(async (req, res) => {
+    const { id } = req.params;
+    const category = await category_modal_1.default.findOne({ _id: id });
+    if (!category)
+        throw new appError_utils_1.default("category not found", 404);
+    //* send success response
+    (0, sendresponse_utils_1.sendResponse)(res, {
+        data: category,
+        message: "category fetched",
+        statusCode: 200,
+    });
+});
+//* create
+exports.create = (0, catchAsync_utils_1.catchAsync)(async (req, res) => {
+    const { name, description } = req.body;
+    const file = req.file;
+    if (!file)
+        throw new appError_utils_1.default("image is required", 400);
+    if (!name)
+        throw new appError_utils_1.default("name is required", 400);
+    const category = new category_modal_1.default({ name, description });
+    const { path, public_id } = await (0, cloudinary_utils_1.uploadFileToCloudinary)(file, "/categories");
+    category.image = {
+        path,
+        public_id,
+    };
+    await category.save();
+    (0, sendresponse_utils_1.sendResponse)(res, {
+        message: "category created",
+        data: category,
+        statusCode: 201,
+    });
+});
+//* update
+exports.update = (0, catchAsync_utils_1.catchAsync)(async (req, res) => {
+    const { id } = req.params;
+    const { name, description } = req.body;
+    const file = req.file;
+    const category = await category_modal_1.default.findOne({ _id: id });
+    if (!category)
+        throw new appError_utils_1.default("category not found", 404);
+    if (name)
+        category.name = name;
+    if (description)
+        category.description;
+    if (file) {
+        //! delete old image
+        await (0, cloudinary_utils_1.deleteFileFormCloudinary)(category.image.public_id);
+        //* upload new image
+        const { path, public_id } = await (0, cloudinary_utils_1.uploadFileToCloudinary)(file, "/categories");
+        category.image = {
+            path,
+            public_id,
+        };
+    }
+    await category.save();
+    (0, sendresponse_utils_1.sendResponse)(res, {
+        message: "category updated",
+        data: category,
+        statusCode: 200,
+    });
+});
+//* delete
+exports.remove = (0, catchAsync_utils_1.catchAsync)(async (req, res) => {
+    const { id } = req.params;
+    const category = await category_modal_1.default.findOne({ _id: id });
+    if (!category)
+        throw new appError_utils_1.default("category not found", 404);
+    await (0, cloudinary_utils_1.deleteFileFormCloudinary)(category.image.public_id);
+    await category.deleteOne();
+    (0, sendresponse_utils_1.sendResponse)(res, {
+        message: "category deleted",
+        data: null,
+        statusCode: 200,
+    });
+});

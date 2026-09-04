@@ -8,8 +8,9 @@ const http_1 = __importDefault(require("http"));
 const database_config_1 = __importDefault(require("./config/database.config"));
 const nodemailer_config_1 = require("./config/nodemailer.config");
 const sendEmail_utils_1 = require("./utils/sendEmail.utils");
-const PORT = 8080;
-const DB_URI = "mongodb://localhost:27017/team_16_db";
+const env_config_1 = require("./config/env.config");
+const PORT = env_config_1.ENV_CONFIG.PORT ?? 8080;
+const DB_URI = env_config_1.ENV_CONFIG.DB_URI;
 // Connect database
 (0, database_config_1.default)(DB_URI);
 // Create HTTP server

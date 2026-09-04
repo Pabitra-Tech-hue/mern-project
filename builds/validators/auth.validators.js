@@ -2,18 +2,22 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.logoutSchema = exports.LoginUserSchema = exports.registerUserSchema = void 0;
 const zod_1 = require("zod");
+// * Register / Signup
 exports.registerUserSchema = zod_1.z.object({
-    body: zod_1.z.object({
-        full_name: zod_1.z
+    body: zod_1.z
+        .object({
+        name: zod_1.z
             .string({
             error: (issue) => issue.input === undefined
-                ? "full_name is required"
-                : "full_name must be a string",
+                ? "name is required"
+                : "name must be a string",
         })
-            .min(1, "full_name is required")
-            .max(100, "full_name can not exceed 100 characters"),
+            .min(1, "name is required")
+            .max(100, "name can not exceed 100 characters"),
         email: zod_1.z.email({
-            error: (issue) => issue.input === undefined ? "email is required" : "Invalid email",
+            error: (issue) => issue.input === undefined
+                ? "email is required"
+                : "Invalid email",
         }),
         password: zod_1.z
             .string({
@@ -22,13 +26,26 @@ exports.registerUserSchema = zod_1.z.object({
                 : "password must be a string",
         })
             .min(6, "minimum 6 characters required"),
+        c_password: zod_1.z
+            .string({
+            error: (issue) => issue.input === undefined
+                ? "confirm password is required"
+                : "confirm password must be a string",
+        })
+            .min(6, "minimum 6 characters required"),
+    })
+        .refine((data) => data.password === data.c_password, {
+        message: "Passwords do not match",
+        path: ["c_password"],
     }),
 });
-// *login
+// * Login
 exports.LoginUserSchema = zod_1.z.object({
     body: zod_1.z.object({
         email: zod_1.z.email({
-            error: (issue) => issue.input === undefined ? "email is required" : "invalid email",
+            error: (issue) => issue.input === undefined
+                ? "email is required"
+                : "invalid email",
         }),
         password: zod_1.z.string({
             error: (issue) => issue.input === undefined
@@ -37,7 +54,7 @@ exports.LoginUserSchema = zod_1.z.object({
         }),
     }),
 });
-// *logout
+// * Logout
 exports.logoutSchema = zod_1.z.object({
     body: zod_1.z.object({}).optional(),
 });
